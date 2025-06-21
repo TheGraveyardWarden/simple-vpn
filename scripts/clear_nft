@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ `/usr/bin/whoami` != "root" ]
+then
+        echo "Must be root"
+        exit 1
+fi
+
+nft delete table ip _nat
+nft delete table ip _filter

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+if [ `/usr/bin/whoami` != "root" ]
+then
+        echo "Must be root"
+        exit 1
+fi
+
+if [ $# -lt 4 ]
+then
+  echo "Usage: ./apply_nft <tun_dev> <default_dev> <network_cidr> <port>"
+  exit 1
+fi
+
+tun=$1
+dev=$2
+cidr=$3
+port=$4
+
+nft add table ip _nat
+nft add chain ip _nat POSTROUTING {type nat hook postrouting priority srcnat\;}
+nft add rule ip _nat POSTROUTING oifname $dev ip saddr $cidr counter masquerade
+
+nft add table ip _filter
+nft add chain ip _filter INPUT {type filter hook input priority filter\;}
+nft add rule ip _filter INPUT iifname $dev tcp dport $port counter accept
+nft add rule ip _filter INPUT iifname $tun counter accept
+
+nft add chain ip _filter FORWARD {type filter hook forward priority filter\;}
+nft add rule ip _filter FORWARD iifname $tun oifname $dev counter accept;
+nft add rule ip _filter FORWARD iifname $dev oifname $tun counter accept;
