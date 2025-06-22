@@ -2,6 +2,8 @@
 #define _CORE_H
 
 #include <net/if.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #define IPV4SIZ 16
 #define DEBUG
@@ -26,5 +28,18 @@ struct config {
 		char dev[IFNAMSIZ];
   } route_cfg;
 };
+
+#ifdef DEBUG
+static void debug(const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  printf(fmt, ap);
+  va_end(ap);
+}
+#else
+#define debug(...)
+#endif
 
 #endif
