@@ -19,10 +19,15 @@ int main(int argc, char *argv[])
   struct config config;
   struct epoll_event ev, events[MAX_EVENTS];
   int tun_fd, sock_fd, epfd, nwrite, nread, n, nfds;
-  char *buff;
-  uint32_t len;
+  char *sock_buff, *tun_buff;
+  uint32_t tun_len, sock_len, stored_len;
 
-	if ((buff = malloc(BUFFSZ)) == NULL) {
+	if ((tun_buff = malloc(BUFFSZ)) == NULL) {
+		perror("malloc");
+		return -1;
+	}
+
+	if ((sock_buff = malloc(BUFFSZ)) == NULL) {
 		perror("malloc");
 		return -1;
 	}
@@ -102,47 +107,59 @@ int main(int argc, char *argv[])
     {
 			if (events[n].data.fd == sock_fd)
 			{
-        nread = read_u32(sock_fd, &len);
+        if (stored_len)
+          goto begin_read_buff;
+
+        nread = read_u32(sock_fd, &sock_len);
         if (nread < 0)
         {
-          printf("read_u32(client_fd, &len)\n");
+          printf("read_u32(sock_fd, &len)\n");
           return -1;
         }
 
-        nread = read_buff(sock_fd, buff, len);
+begin_read_buff:
+        nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
+
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+          stored_len = nread;
+          continue;
+        }
+
         if (nread < 0)
         {
-          printf("read_buff(client_fd, buff, len)\n");
+          printf("read_buff(sock_fd, buff, len)\n");
           return -1;
         }
 
-        nwrite = write_buff(tun_fd, buff, len);
+        nwrite = write_buff(tun_fd, sock_buff, sock_len);
         if (nwrite < 0)
         {
           perror("write_buff(tun_fd, buff, len)");
           return -1;
         }
 
+        stored_len = 0;
       }
       else if (events[n].data.fd == tun_fd)
 			{
-        nread = read_buff2(tun_fd, buff, BUFFSZ);
+        nread = read_buff2(tun_fd, tun_buff, BUFFSZ);
         if (nread < 0)
         {
           printf("read_buff(tun_fd, buff, BUFFSZ)\n");
           return -1;
         }
 
-        len = (uint32_t)nread;
-				printf("sending len to server: %u\n", len);
-        nwrite = write_u32(sock_fd, len);
+        tun_len = (uint32_t)nread;
+				printf("sending len to server: %u\n", tun_len);
+        nwrite = write_u32(sock_fd, tun_len);
         if (nwrite < 0)
         {
           perror("write_u32(client_fd, len)");
           return -1;
         }
 
-        nwrite = write_buff(sock_fd, buff, len);
+        nwrite = write_buff(sock_fd, tun_buff, tun_len);
         if (nwrite < 0)
         {
           perror("write_buff(client_fd, buff, len)");
@@ -156,7 +173,8 @@ int main(int argc, char *argv[])
   close(tun_fd);
   close(sock_fd);
   close(epfd);
-	free(buff);
+	free(tun_buff);
+	free(sock_buff);
 
 	return 0;
 }
