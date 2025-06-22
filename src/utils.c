@@ -50,7 +50,12 @@ static struct config client_config = {
   .tun_netmask = "255.255.255.0",
   .port = 1337,
   .ip = "0.0.0.0",
-  .server_tun_ip_addr = "10.0.0.1"
+  .server_tun_ip_addr = "10.0.0.1",
+	.route_cfg = {
+		.netmask = "255.255.255.255",
+		.gateway = "192.168.1.1",
+		.dev = "wlan0"
+	}
 };
 
 
@@ -71,6 +76,13 @@ void exit_usage(char *bin, int mode)
   if (mode == CLIENT)
     printf("\t-s, --server-tun-ip:\tserver tun ip address (default: %s)\n", defaults->server_tun_ip_addr);
   printf("\t-h, --help:\t\tshows this help message\n");
+
+	if (mode == CLIENT) {	
+		printf("\nENVIRONMENT VARIABLES:\n");
+		printf("\t%s:\t\tnetmask of local network (default: %s)\n", ROUTE_NETMASK_ENV, defaults->route_cfg.netmask);
+		printf("\t%s:\t\tgateway of local network (default: %s)\n", ROUTE_GATEWAY_ENV, defaults->route_cfg.gateway);
+		printf("\t%s:\t\t\tdev of local network (default: %s)\n", ROUTE_DEV_ENV, defaults->route_cfg.dev);
+	}
 
   exit(-1);
 }
@@ -308,6 +320,7 @@ int parse_args(int argc, char *argv[], struct config *config, int mode)
   struct config *defaults;
   int opt;
   int optind = 0;
+	const char *env = NULL;
 
   mode2defaults(mode, defaults);
 
@@ -370,8 +383,19 @@ int parse_args(int argc, char *argv[], struct config *config, int mode)
   if (*(config->ip) == 0)
     strncpy(config->ip, defaults->ip, IPV4SIZ);
 
-  if (*(config->server_tun_ip_addr) == 0)
-    strncpy(config->server_tun_ip_addr, defaults->server_tun_ip_addr, IPV4SIZ);
+	if (mode == CLIENT) {
+	  if (*(config->server_tun_ip_addr) == 0)
+  	  strncpy(config->server_tun_ip_addr, defaults->server_tun_ip_addr, IPV4SIZ);
+
+		if ((env = getenv(ROUTE_NETMASK_ENV)) == NULL)
+			strncpy(config->route_cfg.netmask, defaults->route_cfg.netmask, IPV4SIZ);
+
+		if ((env = getenv(ROUTE_GATEWAY_ENV)) == NULL)
+			strncpy(config->route_cfg.gateway, defaults->route_cfg.gateway, IPV4SIZ);
+
+		if ((env = getenv(ROUTE_DEV_ENV)) == NULL)
+			strncpy(config->route_cfg.dev, defaults->route_cfg.dev, IFNAMSIZ);
+	}
 
   return 0;
 }
@@ -472,9 +496,9 @@ int add_client_routes(struct config *cfg)
   rt.dst = (const char *)cfg->ip;
   // be in dalil ke dar inja faghat yek ip darim va an ip server 
   // ast ino minevisim
-  rt.netmask = "255.255.255.255";
-  rt.gateway = "192.168.43.1"; 
-  rt.dev = "wlp4s0"; 
+  rt.netmask = (const char *)cfg->route_cfg.netmask;
+  rt.gateway = (const char *)cfg->route_cfg.gateway;
+  rt.dev = (const char *)cfg->route_cfg.dev;
   rt.flags = RTF_UP | RTF_GATEWAY | RTF_HOST; // or kardan chand flage ma ke darim
   if (rtentry_data(&rte, &rt) < 0)
   {
