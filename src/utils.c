@@ -569,7 +569,10 @@ begin_read:
 
   if (nread < 0)
   {
-    if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+    if (errno == EAGAIN || errno == EWOULDBLOCK)
+      goto done;
+
+    if (errno == EINTR)
       goto begin_read;
 
     perror("read()");

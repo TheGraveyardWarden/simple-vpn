@@ -21,12 +21,18 @@ int main(int argc, char *argv[])
   struct epoll_event ev, events[MAX_EVENTS];
   struct sockaddr_in addr;
   socklen_t addr_len;
-  char client_ip[16], *buff;
-  uint32_t len;
+  char client_ip[16], *tun_buff, *sock_buff;
+  uint32_t tun_len, sock_len, stored_len = 0;
 
-  if ((buff = malloc(BUFFSZ)) == NULL)
+  if ((tun_buff = malloc(BUFFSZ)) == NULL)
   {
-    perror("malloc()");
+    perror("malloc(tun_buff)");
+    return -1;
+  }
+
+  if ((sock_buff = malloc(BUFFSZ)) == NULL)
+  {
+    perror("malloc(sock_buff)");
     return -1;
   }
 
@@ -115,45 +121,58 @@ int main(int argc, char *argv[])
     {
       if (events[n].data.fd == client_fd)
       {
-        nread = read_u32(client_fd, &len);
+        if (stored_len)
+          goto begin_read_buff;
+
+        nread = read_u32(client_fd, &sock_len);
         if (nread < 0)
         {
           printf("read_u32(client_fd, &len)\n");
           return -1;
         }
 
-        nread = read_buff(client_fd, buff, len);
+begin_read_buff:
+        nread = read_buff(client_fd, sock_buff+stored_len, sock_len-stored_len);
+
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+          stored_len = nread;
+          continue;
+        }
+
         if (nread < 0)
         {
           printf("read_buff(client_fd, buff, len)\n");
           return -1;
         }
 
-        nwrite = write_buff(tun_fd, buff, len);
+        nwrite = write_buff(tun_fd, sock_buff, sock_len);
         if (nwrite < 0)
         {
           perror("write_buff(tun_fd, buff, len)");
           return -1;
         }
+
+        stored_len = 0;
       }
       else if (events[n].data.fd == tun_fd)
       {
-        nread = read_buff2(tun_fd, buff, BUFFSZ);
+        nread = read_buff2(tun_fd, tun_buff, BUFFSZ);
         if (nread < 0)
         {
           printf("read_buff(tun_fd, buff, BUFFSZ)\n");
           return -1;
         }
 
-        len = (uint32_t)nread;
-        nwrite = write_u32(client_fd, len);
+        tun_len = (uint32_t)nread;
+        nwrite = write_u32(client_fd, tun_len);
         if (nwrite < 0)
         {
           perror("write_u32(client_fd, len)");
           return -1;
         }
 
-        nwrite = write_buff(client_fd, buff, len);
+        nwrite = write_buff(client_fd, tun_buff, tun_len);
         if (nwrite < 0)
         {
           perror("write_buff(client_fd, buff, len)");
@@ -167,7 +186,8 @@ int main(int argc, char *argv[])
   close(tun_fd);
   close(sock_fd);
   close(epfd);
-  free(buff);
+  free(tun_buff);
+  free(sock_buff);
 
 	return 0;
 }
