@@ -122,8 +122,6 @@ int main(int argc, char *argv[])
           return -1;
         }
 
-        printf("will try to read %u bytes\n", len);
-
         nread = read_buff(client_fd, buff, len);
         if (nread < 0)
         {
