@@ -117,6 +117,15 @@ int main(int argc, char *argv[])
       return -1;
     }
 
+    /* Optimization Idea
+     * 
+     * if socket read is paused:
+     *   make sure we handle tun_fd first
+     * else:
+     *   whatever
+     *
+     * */
+
     for (n = 0; n < nfds; n++)
     {
       if (events[n].data.fd == client_fd)
