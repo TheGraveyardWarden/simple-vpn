@@ -157,7 +157,7 @@ begin_read_buff:
           return -1;
         }
 
-        debug("%ld: finished operation: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
+        debug("%ld: finished read operation: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
 
         stored_len = 0;
         paused = 0;
@@ -193,6 +193,7 @@ begin_read_buff:
           return -1;
         }
 
+        debug("%ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, tun_len);
       }
     }
   }
