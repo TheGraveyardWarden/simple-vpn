@@ -129,10 +129,10 @@ int main(int argc, char *argv[])
 begin_read_buff:
         debug("issue read: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
         nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
+        stored_len += (uint32_t)nread;
 
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-          stored_len += (uint32_t)nread;
           debug("issue pause: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
           paused = 1;
           continue;
@@ -165,8 +165,9 @@ begin_read_buff:
           return -1;
         }
 
+        debug("issue write to peer: len: %u\n", tun_len);
+
         tun_len = (uint32_t)nread;
-				printf("sending len to server: %u\n", tun_len);
         nwrite = write_u32(sock_fd, tun_len);
         if (nwrite < 0)
         {
