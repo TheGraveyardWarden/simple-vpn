@@ -14,6 +14,14 @@
 #define MAX_EVENTS 200
 #define BUFFSZ 500*1024
 
+static const char* strstatus(char status)
+{
+  if (status)
+    return "resuming";
+  else
+    return "started";
+}
+
 int main(int argc, char *argv[])
 {
   struct config config;
@@ -119,13 +127,13 @@ int main(int argc, char *argv[])
         }
 
 begin_read_buff:
-        debug("issue read: status: %s, total: %u, got: %u\n", paused ? "resuming" : "started", sock_len, stored_len);
+        debug("issue read: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
         nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
 
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
           stored_len += (uint32_t)nread;
-          debug("issue pause: status: %s, total: %u, got: %u\n", paused ? "resuming" : "started", sock_len, stored_len);
+          debug("issue pause: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
           paused = 1;
           continue;
         }
@@ -143,7 +151,7 @@ begin_read_buff:
           return -1;
         }
 
-        debug("finished operation: status: %s, total: %u, got: %u\n", paused ? "resuming" : "started", sock_len, stored_len);
+        debug("finished operation: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
 
         stored_len = 0;
         paused = 0;
