@@ -656,11 +656,9 @@ _write:
 
   if (!nwrite) return (int)nwrite;
 
-#ifdef DEBUG
-	printf("write finished in a funny way\n");
-	printf("errno: %s\n", strerror(errno));
-	printf("nwrite: %zd, size: %ud\n", nwrite, size);
-#endif
+	debug("write finished in a funny way\n");
+	debug("errno: %s\n", strerror(errno));
+	debug("nwrite: %zd, size: %ud\n", nwrite, size);
 
 done:
   return (int)ret;

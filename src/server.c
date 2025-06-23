@@ -199,9 +199,8 @@ begin_read_buff:
           return -1;
         }
 
-        debug("%ld: issue write to peer: len: %u\n", tun_id, tun_len);
-
         tun_len = (uint32_t)nread;
+        debug("%ld: issue write to peer: len: %u\n", tun_id, tun_len);
         nwrite = write_u32(client_fd, tun_len);
         if (nwrite < 0)
         {
