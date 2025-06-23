@@ -148,7 +148,7 @@ begin_read_buff:
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
           paused = 1;
-          stored_len += nread;
+          stored_len += (uint32_t)nread;
           printf("we paused. stored_len: %u\tsock_len: %u\n", stored_len, sock_len);
           continue;
         }
