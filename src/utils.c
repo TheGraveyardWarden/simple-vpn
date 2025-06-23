@@ -564,8 +564,12 @@ begin_read:
     goto done;
   }
 
+  printf("read_buff after while. nread: %d\terrno: %s\treadn: %u\n", nread, strerror(errno), readn);
+
+  /*
   if (readn == 0)
     goto begin_read;
+    */
 
   if (nread < 0)
   {
