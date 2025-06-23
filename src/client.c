@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
   char *sock_buff, *tun_buff;
   uint32_t tun_len, sock_len, stored_len = 0;
   char paused = 0;
+  unsigned long long sock_id = 0, tun_id = 0;
 
 	if ((tun_buff = malloc(BUFFSZ)) == NULL) {
 		perror("malloc");
@@ -119,6 +120,11 @@ int main(int argc, char *argv[])
         if (paused)
           goto begin_read_buff;
 
+        if (sock_id + 1 < sock_id)
+          sock_id = 0;
+
+        sock_id++;
+
         nread = read_u32(sock_fd, &sock_len);
         if (nread < 0)
         {
@@ -127,13 +133,13 @@ int main(int argc, char *argv[])
         }
 
 begin_read_buff:
-        debug("issue read: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
+        debug("%ld: issue read: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
         nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
         stored_len += (uint32_t)nread;
 
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-          debug("issue pause: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
+          debug("%ld: issue pause: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
           paused = 1;
           continue;
         }
@@ -151,13 +157,18 @@ begin_read_buff:
           return -1;
         }
 
-        debug("finished operation: status: %s, total: %u, got: %u\n", strstatus(paused), sock_len, stored_len);
+        debug("%ld: finished operation: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
 
         stored_len = 0;
         paused = 0;
       }
       else if (events[n].data.fd == tun_fd)
 			{
+        if (tun_id + 1 < tun_id)
+          tun_id = 0;
+
+        tun_id++;
+
         nread = read_buff2(tun_fd, tun_buff, BUFFSZ);
         if (nread < 0)
         {
@@ -165,7 +176,7 @@ begin_read_buff:
           return -1;
         }
 
-        debug("issue write to peer: len: %u\n", tun_len);
+        debug("%ld: issue write to peer: len: %u\n", tun_id, tun_len);
 
         tun_len = (uint32_t)nread;
         nwrite = write_u32(sock_fd, tun_len);
