@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
   struct epoll_event ev, events[MAX_EVENTS];
   int tun_fd, sock_fd, epfd, nwrite, nread, n, nfds;
   char *sock_buff, *tun_buff;
-  uint32_t tun_len, sock_len, stored_len;
+  uint32_t tun_len, sock_len, stored_len = 0;
   char paused = 0;
 
 	if ((tun_buff = malloc(BUFFSZ)) == NULL) {
