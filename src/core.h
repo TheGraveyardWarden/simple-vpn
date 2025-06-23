@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 #define IPV4SIZ 16
-#define DEBUG
 
 #define ROUTE_NETMASK_ENV "RT_NETMASK"
 #define ROUTE_GATEWAY_ENV "RT_GATEWAY"

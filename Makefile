@@ -1,4 +1,14 @@
 CC=gcc
+CFLAGS=
+DEFINES=
+
+ifndef DEBUG
+	CFLAGS+=-Ofast
+endif
+
+ifdef DEBUG
+	DEFINES+=-DDEBUG
+endif
 
 SRC_DIR=./src
 BIN_DIR=./bin
@@ -22,13 +32,13 @@ LIBS=
 all: server client
 
 server: mkdir $(SRV_OBJS)
-	$(CC) $(INCLUDE_DIRS) $(SRV_OBJS) -o $(SRV_BIN) $(LIBS)
+	$(CC) $(INCLUDE_DIRS) $(SRV_OBJS) -o $(SRV_BIN) $(LIBS) $(CFLAGS) $(DEFINES)
 
 client: mkdir $(CLI_OBJS)
-	$(CC) $(INCLUDE_DIRS) $(CLI_OBJS) -o $(CLI_BIN) $(LIBS)
+	$(CC) $(INCLUDE_DIRS) $(CLI_OBJS) -o $(CLI_BIN) $(LIBS) $(CFLAGS) $(DEFINES)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(INCLUDE_DIRS) -c $^ -o $@ $(LIBS)
+	$(CC) $(INCLUDE_DIRS) -c $^ -o $@ $(LIBS) $(CFLAGS) $(DEFINES)
 
 mkdir:
 	@if [ ! -d bin ]; then mkdir bin; fi
