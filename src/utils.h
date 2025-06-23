@@ -31,8 +31,9 @@ int sockaddr_in_data(struct sockaddr_in *sin, int domain, const char *ip, unsign
 int rtentry_data(struct rtentry *rte, struct route *rt);
 int add_client_routes(struct config *cfg);
 int logger(const char *name, const char *buff, unsigned int size);
-int read_buff(int fd, void *buff, unsigned int size); // reads exactly size bytes
-int read_buff2(int fd, void *buff, unsigned int size); // read upto size bytes
+int read_buff(int fd, void *buff, unsigned int size); // reads exactly size bytes if possible (nonblocking)
+int read_buff2(int fd, void *buff, unsigned int size); // reads upto size bytes
+int read_blocking(int fd, void *buff, unsigned int size); // reads exactly size bytes (blocking)
 int read_u32(int fd, uint32_t *u32);
 int write_u32(int fd, uint32_t x);
 int write_buff(int fd, const void *buff, size_t size);

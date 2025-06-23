@@ -615,11 +615,44 @@ done:
   return (int)readn;
 }
 
+int read_blocking(int fd, void *buff, unsigned int size)
+{
+  int nread;
+  unsigned int readn = 0;
+  errno = 0;
+
+begin_read:
+  while ((nread = read(fd, buff+readn, size-readn)) > 0)
+  {
+    readn += (unsigned int)nread;
+
+    if (readn != size)
+      continue;
+
+    goto done;
+  }
+
+  if (readn == 0)
+    goto begin_read;
+
+  if (nread < 0)
+  {
+    if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+      goto begin_read;
+
+    perror("read()");
+    return -1;
+  }
+
+done:
+  return (int)readn;
+}
+
 int read_u32(int fd, uint32_t *u32)
 {
   int nread;
 
-  if ((nread = read_buff(fd, u32, sizeof(*u32))) < 0)
+  if ((nread = read_blocking(fd, u32, sizeof(*u32))) < 0)
   {
     printf("read_buff(fd, u32)\n");
     return -1;
