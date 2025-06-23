@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
   int tun_fd, sock_fd, epfd, nwrite, nread, n, nfds;
   char *sock_buff, *tun_buff;
   uint32_t tun_len, sock_len, stored_len;
+  char paused = 0;
 
 	if ((tun_buff = malloc(BUFFSZ)) == NULL) {
 		perror("malloc");
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
     {
 			if (events[n].data.fd == sock_fd)
 			{
-        if (stored_len)
+        if (paused)
           goto begin_read_buff;
 
         nread = read_u32(sock_fd, &sock_len);
@@ -118,11 +119,14 @@ int main(int argc, char *argv[])
         }
 
 begin_read_buff:
+        printf("trying to read_buff from socket: stored_len: %u\tsock_len: %u\n", stored_len, sock_len);
         nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
 
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
+          paused = 1;
           stored_len = nread;
+          printf("we paused. stored_len: %u\tsock_len: %u\n", stored_len, sock_len);
           continue;
         }
 
@@ -140,6 +144,7 @@ begin_read_buff:
         }
 
         stored_len = 0;
+        paused = 0;
       }
       else if (events[n].data.fd == tun_fd)
 			{
