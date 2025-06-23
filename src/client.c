@@ -119,14 +119,14 @@ int main(int argc, char *argv[])
         }
 
 begin_read_buff:
-        printf("trying to read_buff from socket: stored_len: %u\tsock_len: %u\n", stored_len, sock_len);
+        debug("issue read: status: %s, total: %d, got: %u\n", paused ? "resuming" : "started", sock_len, stored_len);
         nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
 
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-          paused = 1;
           stored_len += (uint32_t)nread;
-          printf("we paused. stored_len: %u\tsock_len: %u\n", stored_len, sock_len);
+          debug("issue pause: status: %s, total: %d, got: %u\n", paused ? "resuming" : "started", sock_len, stored_len);
+          paused = 1;
           continue;
         }
 
@@ -142,6 +142,8 @@ begin_read_buff:
           perror("write_buff(tun_fd, buff, len)");
           return -1;
         }
+
+        debug("finished operation: status: %s, total: %d, got: %u\n", paused ? "resuming" : "started", sock_len, stored_len);
 
         stored_len = 0;
         paused = 0;
