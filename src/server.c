@@ -135,6 +135,13 @@ int main(int argc, char *argv[])
      *   whatever
      *
      * */
+    if (paused && nfds > 1 && events[1].data.fd == tun_fd)
+    {
+      debug("issue swap events\n");
+      ev = events[1];
+      events[1] = events[0];
+      events[0] = ev;
+    }
 
     for (n = 0; n < nfds; n++)
     {
