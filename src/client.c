@@ -113,6 +113,22 @@ int main(int argc, char *argv[])
       return -1;
     }
 
+    /* Optimization Idea
+     * 
+     * if socket read is paused:
+     *   make sure we handle tun_fd first
+     * else:
+     *   whatever
+     *
+     * */
+    if (paused && nfds > 1 && events[1].data.fd == tun_fd)
+    {
+      debug("issue swap events\n");
+      ev = events[1];
+      events[1] = events[0];
+      events[0] = ev;
+    }
+
     for (n = 0; n < nfds; n++)
     {
 			if (events[n].data.fd == sock_fd)
