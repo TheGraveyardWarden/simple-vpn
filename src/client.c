@@ -30,7 +30,10 @@ int main(int argc, char *argv[])
   char *sock_buff, *tun_buff;
   uint32_t tun_len, sock_len, stored_len = 0;
   char paused = 0;
+
+#ifdef DEBUG
   unsigned long long sock_id = 0, tun_id = 0;
+#endif
 
 	if ((tun_buff = malloc(BUFFSZ)) == NULL) {
 		perror("malloc");
@@ -136,10 +139,12 @@ int main(int argc, char *argv[])
         if (paused)
           goto begin_read_buff;
 
+#ifdef DEBUG
         if (sock_id + 1 < sock_id)
           sock_id = 0;
 
         sock_id++;
+#endif
 
         nread = read_u32(sock_fd, &sock_len);
         if (nread < 0)
@@ -180,10 +185,12 @@ begin_read_buff:
       }
       else if (events[n].data.fd == tun_fd)
 			{
+#ifdef DEBUG
         if (tun_id + 1 < tun_id)
           tun_id = 0;
 
         tun_id++;
+#endif
 
         nread = read_buff2(tun_fd, tun_buff, BUFFSZ);
         if (nread < 0)
