@@ -4,9 +4,7 @@ DEFINES=
 
 ifndef DEBUG
 	CFLAGS+=-Ofast
-endif
-
-ifdef DEBUG
+else
 	DEFINES+=-DDEBUG
 endif
 
