@@ -12,6 +12,10 @@ ifdef PPT
 	DEFINES+=-DPACKET_PROCESS_TIME
 endif
 
+ifdef TROS
+	DEFINES+=-DTUN_READ_PREFERRED_OVER_SOCK
+endif
+
 SRC_DIR=./src
 BIN_DIR=./bin
 OBJ_DIR=./obj
