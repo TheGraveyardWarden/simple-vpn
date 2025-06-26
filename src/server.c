@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
      *   whatever
      *
      * */
+#ifdef TUN_READ_PREFERRED_OVER_SOCK
     if (paused && nfds > 1 && events[1].data.fd == tun_fd)
     {
       debug("issue swap events\n");
@@ -153,6 +154,7 @@ int main(int argc, char *argv[])
       events[1] = events[0];
       events[0] = ev;
     }
+#endif
 
     for (n = 0; n < nfds; n++)
     {
