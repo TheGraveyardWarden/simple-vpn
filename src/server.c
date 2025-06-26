@@ -158,11 +158,13 @@ int main(int argc, char *argv[])
     {
       if (events[n].data.fd == client_fd)
       {
-#ifdef PACKET_PROCESS_TIME
-        sock_start = clock();
-#endif
+
         if (paused)
           goto begin_read_buff;
+#ifdef PACKET_PROCESS_TIME
+        else
+          sock_start = clock();
+#endif
 
 #ifdef DEBUG
         if (sock_id + 1 < sock_id)
