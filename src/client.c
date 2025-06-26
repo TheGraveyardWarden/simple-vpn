@@ -9,6 +9,10 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
+#ifdef PACKET_PROCESS_TIME
+#include <time.h>
+#endif
+
 #define MODE CLIENT
 
 #define MAX_EVENTS 200
@@ -33,6 +37,10 @@ int main(int argc, char *argv[])
 
 #ifdef DEBUG
   unsigned long long sock_id = 0, tun_id = 0;
+#endif
+
+#ifdef PACKET_PROCESS_TIME
+  clock_t tun_start, tun_finish, sock_start, sock_finish;
 #endif
 
 	if ((tun_buff = malloc(BUFFSZ)) == NULL) {
@@ -136,6 +144,9 @@ int main(int argc, char *argv[])
     {
 			if (events[n].data.fd == sock_fd)
 			{
+#ifdef PACKET_PROCESS_TIME
+        sock_start = clock();
+#endif
         if (paused)
           goto begin_read_buff;
 
@@ -154,13 +165,13 @@ int main(int argc, char *argv[])
         }
 
 begin_read_buff:
-        debug("%ld: issue read: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
+        debug("[R] %ld: issue read: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
         nread = read_buff(sock_fd, sock_buff+stored_len, sock_len-stored_len);
         stored_len += (uint32_t)nread;
 
         if (errno == EAGAIN || errno == EWOULDBLOCK)
         {
-          debug("%ld: issue pause: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
+          debug("[R] %ld: issue pause: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
           paused = 1;
           continue;
         }
@@ -177,14 +188,23 @@ begin_read_buff:
           perror("write_buff(tun_fd, buff, len)");
           return -1;
         }
-
-        debug("%ld: finished read operation: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
+#ifdef PACKET_PROCESS_TIME
+        sock_finish = clock();
+        debug("[R] %ld: finished read operation: status: %s, total: %u, got: %u, took: %f ms\n", sock_id, strstatus(paused), sock_len, stored_len,
+            ((double)(sock_finish - sock_start) / CLOCKS_PER_SEC) * 1000);
+#else
+        debug("[R] %ld: finished read operation: status: %s, total: %u, got: %u\n", sock_id, strstatus(paused), sock_len, stored_len);
+#endif
 
         stored_len = 0;
         paused = 0;
       }
       else if (events[n].data.fd == tun_fd)
 			{
+#ifdef PACKET_PROCESS_TIME
+        tun_start = clock();
+#endif
+
 #ifdef DEBUG
         if (tun_id + 1 < tun_id)
           tun_id = 0;
@@ -200,7 +220,7 @@ begin_read_buff:
         }
 
         tun_len = (uint32_t)nread;
-        debug("%ld: issue write to peer: len: %u\n", tun_id, tun_len);
+        debug("[W] %ld: issue write to peer: len: %u\n", tun_id, tun_len);
         nwrite = write_u32(sock_fd, tun_len);
         if (nwrite < 0)
         {
@@ -214,8 +234,13 @@ begin_read_buff:
           perror("write_buff(client_fd, buff, len)");
           return -1;
         }
-
-        debug("%ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, tun_len);
+#ifdef PACKET_PROCESS_TIME
+        tun_finish = clock();
+        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes, took %f ms\n", tun_id, nwrite, tun_len,
+            ((double)(tun_finish - tun_start) / CLOCKS_PER_SEC) * 1000);
+#else
+        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, tun_len);
+#endif
       }
     }
   }

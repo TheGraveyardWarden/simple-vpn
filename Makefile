@@ -8,12 +8,17 @@ else
 	DEFINES+=-DDEBUG
 endif
 
+ifdef PPT
+	DEFINES+=-DPACKET_PROCESS_TIME
+endif
+
 SRC_DIR=./src
 BIN_DIR=./bin
 OBJ_DIR=./obj
 INCLUDE_DIRS=-I$(SRC_DIR)
 
 SRV_BIN=$(BIN_DIR)/server
+SRV_STATIC_BIN=$(BIN_DIR)/server_static
 CLI_BIN=$(BIN_DIR)/client
 
 SRCS=$(wildcard $(SRC_DIR)/*.c)
@@ -31,6 +36,8 @@ all: server client
 
 server: mkdir $(SRV_OBJS)
 	$(CC) $(INCLUDE_DIRS) $(SRV_OBJS) -o $(SRV_BIN) $(LIBS) $(CFLAGS) $(DEFINES)
+	# would be nice to move this to another rule
+	$(CC) $(INCLUDE_DIRS) $(SRV_OBJS) -o $(SRV_STATIC_BIN) $(LIBS) $(CFLAGS) $(DEFINES) -static
 
 client: mkdir $(CLI_OBJS)
 	$(CC) $(INCLUDE_DIRS) $(CLI_OBJS) -o $(CLI_BIN) $(LIBS) $(CFLAGS) $(DEFINES)
