@@ -550,29 +550,22 @@ int logger(const char *name, const char *buff, unsigned int size)
 int read_buff(int fd, void *buff, unsigned int size)
 {
   int nread;
-  unsigned int readn = 0;
   errno = 0;
 
 begin_read:
-  while ((nread = read(fd, buff+readn, size-readn)) > 0)
-  {
-    readn += (unsigned int)nread;
+  nread = read(fd, buff, size);
 
-    if (readn != size)
-      continue;
+  if (nread >= 0) {
+    if (nread != size) {
+      errno = EAGAIN;
+    }
 
-    goto done;
+    return nread;
   }
-
-  /*
-  if (readn == 0)
-    goto begin_read;
-    */
-
-  if (nread < 0)
+  else
   {
     if (errno == EAGAIN || errno == EWOULDBLOCK)
-      goto done;
+      return 0;
 
     if (errno == EINTR)
       goto begin_read;
@@ -581,8 +574,8 @@ begin_read:
     return -1;
   }
 
-done:
-  return (int)readn;
+  // never reaches
+  return nread;
 }
 
 int read_buff2(int fd, void *buff, unsigned int size)
