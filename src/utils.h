@@ -36,6 +36,8 @@ int read_buff2(int fd, void *buff, unsigned int size); // read upto size bytes
 int read_u32(int fd, uint32_t *u32);
 int write_u32(int fd, uint32_t x);
 int write_buff(int fd, const void *buff, size_t size);
+int encrypt(const char *plaintext, char *ciphertext, size_t size, const char *key);
+int decrypt(const char *ciphertext, char *plaintext, size_t size, const char *key);
 
 #define VALIDATE_IPV4(ip) \
   if (validate_ipv4((ip)) < 0) { printf("invalid ip address: %s\n", ip); exit(-1); }

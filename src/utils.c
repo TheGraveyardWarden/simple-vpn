@@ -758,3 +758,40 @@ int write_u32(int fd, uint32_t x)
 	return write_buff(fd, &net_x, sizeof(uint32_t));
 }
 
+int encrypt(const char *plaintext, char *ciphertext, size_t size, const char *key)
+{
+  if (!ciphertext || !plaintext)
+  {
+    errno = EINVAL;
+    return -1;
+  }
+
+  int i;
+  errno = 0;
+
+  for (i = 0; i < size; i++)
+  {
+    ciphertext[i] = plaintext[i] + key[i % ENCKEYSIZ];
+  }
+
+  return 0;
+}
+
+int decrypt(const char *ciphertext, char *plaintext, size_t size, const char *key)
+{
+  if (!ciphertext || !plaintext)
+  {
+    errno = EINVAL;
+    return -1;
+  }
+
+  int i;
+  errno = 0;
+
+  for (i = 0; i < size; i++)
+  {
+    plaintext[i] = ciphertext[i] - key[i % ENCKEYSIZ];
+  }
+
+  return 0;
+}
