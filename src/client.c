@@ -119,6 +119,13 @@ int main(int argc, char *argv[])
           printf("read_buff(client_fd, buff, len)\n");
           return -1;
         }
+
+        if (decrypt(buff, buff, len, config.enckey) < 0)
+        {
+          perror("decrypt()");
+          return -1;
+        }
+
         // hala darim buffer ro be tun midim baraye process
         nwrite = write_buff(tun_fd, buff, len);
         if (nwrite < 0)
@@ -146,6 +153,12 @@ int main(int argc, char *argv[])
         if (nwrite < 0)
         {
           perror("write_u32(client_fd, len)");
+          return -1;
+        }
+
+        if (encrypt(buff, buff, len, config.enckey) < 0)
+        {
+          perror("encrypt()");
           return -1;
         }
 
