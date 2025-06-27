@@ -10,6 +10,9 @@
 #define ROUTE_GATEWAY_ENV "RT_GATEWAY"
 #define ROUTE_DEV_ENV			"RT_DEV"
 
+#define ENCKEYSIZ   16
+#define ENCKEY_ENV  "ENCKEY"
+
 struct config {
   // mutual in server and client
   char tun_name[IFNAMSIZ];
@@ -17,6 +20,7 @@ struct config {
   char tun_netmask[IPV4SIZ];
   unsigned int port;
   char ip[IPV4SIZ];
+  char enckey[ENCKEYSIZ+1]; // +1 for null termination
 
   // client specific
   char server_tun_ip_addr[IPV4SIZ];

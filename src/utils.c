@@ -41,7 +41,8 @@ static struct config server_config = {
   .tun_ip_addr = "10.0.0.1",
   .tun_netmask = "255.255.255.0",
   .port = 1337,
-  .ip = "0.0.0.0"
+  .ip = "0.0.0.0",
+  .enckey = "qScFtHmKgDfSx%$&"
 };
 
 static struct config client_config = {
@@ -55,7 +56,8 @@ static struct config client_config = {
 		.netmask = "255.255.255.255",
 		.gateway = "192.168.1.1",
 		.dev = "wlan0"
-	}
+	},
+  .enckey = "qScFtHmKgDfSx%$&"
 };
 
 
@@ -77,12 +79,14 @@ void exit_usage(char *bin, int mode)
     printf("\t-s, --server-tun-ip:\tserver tun ip address (default: %s)\n", defaults->server_tun_ip_addr);
   printf("\t-h, --help:\t\tshows this help message\n");
 
+  printf("\nENVIRONMENT VARIABLES:\n");
 	if (mode == CLIENT) {	
-		printf("\nENVIRONMENT VARIABLES:\n");
 		printf("\t%s:\t\tnetmask of local network (default: %s)\n", ROUTE_NETMASK_ENV, defaults->route_cfg.netmask);
 		printf("\t%s:\t\tgateway of local network (default: %s)\n", ROUTE_GATEWAY_ENV, defaults->route_cfg.gateway);
 		printf("\t%s:\t\t\tdev of local network (default: %s)\n", ROUTE_DEV_ENV, defaults->route_cfg.dev);
 	}
+
+  printf("\t%s:\t\t\tkey used for encryption. should be same in client and server. (%d bytes exactly) (default: ***)\n", ENCKEY_ENV, ENCKEYSIZ);
 
   exit(-1);
 }
@@ -389,13 +393,38 @@ int parse_args(int argc, char *argv[], struct config *config, int mode)
 
 		if ((env = getenv(ROUTE_NETMASK_ENV)) == NULL)
 			strncpy(config->route_cfg.netmask, defaults->route_cfg.netmask, IPV4SIZ);
+    else
+    {
+      VALIDATE_IPV4(env);
+			strncpy(config->route_cfg.netmask, env, IPV4SIZ);
+    }
 
 		if ((env = getenv(ROUTE_GATEWAY_ENV)) == NULL)
 			strncpy(config->route_cfg.gateway, defaults->route_cfg.gateway, IPV4SIZ);
+    else
+    {
+      VALIDATE_IPV4(env);
+			strncpy(config->route_cfg.gateway, env, IPV4SIZ);
+    }
 
 		if ((env = getenv(ROUTE_DEV_ENV)) == NULL)
 			strncpy(config->route_cfg.dev, defaults->route_cfg.dev, IFNAMSIZ);
+    else
+			strncpy(config->route_cfg.dev, env, IFNAMSIZ);
 	}
+
+	if ((env = getenv(ENCKEY_ENV)) == NULL)
+		strncpy(config->enckey, defaults->enckey, ENCKEYSIZ);
+  else
+  {
+    if (strlen(env) != ENCKEYSIZ)
+    {
+      printf("encryption key must be exactly %d bytes\n", ENCKEYSIZ);
+      return -1;
+    }
+
+		strncpy(config->enckey, env, ENCKEYSIZ);
+  }
 
   return 0;
 }
