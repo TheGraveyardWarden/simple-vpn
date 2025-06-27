@@ -38,6 +38,6 @@ int write_u32(int fd, uint32_t x);
 int write_buff(int fd, const void *buff, size_t size);
 
 #define VALIDATE_IPV4(ip) \
-  if (validate_ipv4((ip)) < 0) { printf("invalid ip address: %s\n", optarg); exit(-1); }
+  if (validate_ipv4((ip)) < 0) { printf("invalid ip address: %s\n", ip); exit(-1); }
 
 #endif
