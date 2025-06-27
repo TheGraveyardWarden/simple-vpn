@@ -51,10 +51,10 @@ int main(int argc, char *argv[])
   {
     printf("failed to add routes!\n");
 
-#ifdef DEBUG_CONFIG
-    printf("config\n{\n\ttun_name: %s,\n\ttun_ip_addr: %s,\n\ttun_netmask: %s,\n\tport: %u,\n\tip: %s,\n\tserver_tun_ip_addr: %s\n\n}\n",
-        config.tun_name, config.tun_ip_addr, config.tun_netmask, config.port, config.ip, config.server_tun_ip_addr);
-#endif
+  #ifdef DEBUG_CONFIG
+      printf("config\n{\n\ttun_name: %s,\n\ttun_ip_addr: %s,\n\ttun_netmask: %s,\n\tport: %u,\n\tip: %s,\n\tserver_tun_ip_addr: %s\n\n}\n",
+          config.tun_name, config.tun_ip_addr, config.tun_netmask, config.port, config.ip, config.server_tun_ip_addr);
+  #endif
 
     return -1;
   }
@@ -100,22 +100,26 @@ int main(int argc, char *argv[])
 
     for (n = 0; n < nfds; n++)
     {
+      // dar inja packet responsi ke az samt server amade ra mikhanim 
+      // va an ra be tun midahim ta process shavad 
 			if (events[n].data.fd == sock_fd)
 			{
+        // aval size ra migirim az server 
         nread = read_u32(sock_fd, &len);
         if (nread < 0)
         {
           printf("read_u32(client_fd, &len)\n");
           return -1;
         }
-
+        // hala size ro darim va packet ro az server mikhonim 
+        // mirizim to buffer 
         nread = read_buff(sock_fd, buff, len);
         if (nread < 0)
         {
           printf("read_buff(client_fd, buff, len)\n");
           return -1;
         }
-
+        // hala darim buffer ro be tun midim baraye process
         nwrite = write_buff(tun_fd, buff, len);
         if (nwrite < 0)
         {
@@ -124,6 +128,9 @@ int main(int argc, char *argv[])
         }
 
       }
+      // inja ma ebteda marhaleye aval ra ejra mikonim 
+      // dakhele barge -- dar vaghe dar inja packet az tun interface
+      // khande mishavad va be samte server ferestade mishavad
       else if (events[n].data.fd == tun_fd)
 			{
         nread = read_buff2(tun_fd, buff, BUFFSZ);

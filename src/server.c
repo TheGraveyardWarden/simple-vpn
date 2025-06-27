@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
   char client_ip[16], *buff;
   uint32_t len;
 
+  //malloc = memory allocate ==  ma inja buffer ro allocate mikonim
   if ((buff = malloc(BUFFSZ)) == NULL)
   {
     perror("malloc()");
@@ -34,12 +35,14 @@ int main(int argc, char *argv[])
   memset(&addr, 0, sizeof(struct sockaddr_in));
   addr_len = sizeof(addr);
 
+  // inja config ro az argv(argument variable) migirim yani haman 
+  // option haye narm afzar(-i , -l ,.....) ra migire
   if (parse_args(argc, argv, &config, MODE) < 0)
   {
     printf("failed to parse args!\n");
     return -1;
   }
-
+  // tun interface ro misaze
   if ((tun_fd = tun_alloc(config.tun_name,
                           IFF_TUN | IFF_NO_PI,
                           0,
@@ -51,7 +54,7 @@ int main(int argc, char *argv[])
   }
 
   printf("allocated tun deivce\n");
-
+  // inja socket samt server ra misazim --  sock_fd faghat makhsose accept kardane connection ast
   if ((sock_fd = sock_create(AF_INET, SOCK_STREAM, 0, config.ip, config.port, 1)) < 0)
   {
     printf("failed to create socket\n");
@@ -59,25 +62,27 @@ int main(int argc, char *argv[])
   }
 
   printf("listening on %s:%u\n", config.ip, config.port);
-
+  //accept built in -- accept function will block the code until someone connect to server 
+  // client_fd baraye read va write ba client ast
   if ((client_fd = accept(sock_fd, (struct sockaddr *)&addr, &addr_len)) < 0)
   {
     perror("accept()");
     return -1;
   }
-
+  // nonblocking ast client_fd chon vaghti mikhaim ba client read va write konim 
+  // nemikhaim code block shavad
   if (set_nonblocking(client_fd) < 0)
   {
     perror("set_nonblocking() client_fd");
     return -1;
   }
-
+  // baraye print kardane ip va port client -- ntop(network to persentation)
   if (inet_ntop(AF_INET, &addr.sin_addr, client_ip, 16) == NULL)
   {
     perror("inet_pton()");
     return -1;
   }
-
+  //ntohs(network to host) == ip va port ro print mikonad
   printf("%s:%d connected!!\n", client_ip, ntohs(addr.sin_port));
 
   if ((epfd = epoll_create1(0)) < 0)
@@ -85,7 +90,8 @@ int main(int argc, char *argv[])
     perror("epoll_create1()");
     return -1;
   }
-
+  // The EPOLLIN event indicates that the file descriptor is ready for reading
+  // - meaning that there is data available to be read. 
   ev.events = EPOLLIN;
   ev.data.fd = client_fd;
   if (epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &ev) < 0)
