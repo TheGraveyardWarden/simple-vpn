@@ -61,7 +61,7 @@ static struct config client_config = {
 };
 
 
-// This will print the 
+// This will print the  arguments when -h 
 void exit_usage(char *bin, int mode)
 {
   struct config *defaults;
@@ -100,6 +100,7 @@ int validate_ipv4(const char *ip)
   memset(&addr, 0, sizeof(struct in_addr));
 
   // built in ast ((man inet_pton)) pton== presentation(text ya string) to network(yani binery)
+  // inet_pton() == Internet Protocol address, presentation to network
   if (inet_pton(AF_INET, ip, &addr) == 0)
     return -1;
 
@@ -114,9 +115,10 @@ int tun_alloc(const char *name,
 {
   int tun_fd, sock_fd;
   // in do ta built in hastand ifreq is in netdevice
+  // ifreq == (interface request)(built in linux ast) - ifreq is use to allocate and cofigure a TUN interface 
   struct ifreq ifr;
   struct sockaddr_in sin;
-  // ifr and sin ro sefr mikone
+  // ifr and sin ro sefr mikone - memset aval Initialize the structure to zero
   memset(&ifr, 0, sizeof(ifr));
   memset(&sin, 0, sizeof(sin));
 
@@ -128,33 +130,39 @@ int tun_alloc(const char *name,
   }
 
   //in flag ha moshkhas konandeye modele interface( tun ya tap) hastand
+  // in the second line it set the flags for the interface(IFF_TUN, IFF_UP)
   strncpy(ifr.ifr_name, name, IFNAMSIZ);
   ifr.ifr_flags = flags;
-  //TUNSETIFF  : tun set interface flag   (be in migan request)  - inja flag va name ro set mikonim
+  //TUNSETIFF  : tun set interface flag   (be in migan request)  - inja flags va name ro set mikonim
   if (ioctl(tun_fd, TUNSETIFF, &ifr) < 0)
   {
     perror("failed to allocate tun device");
     goto tun_cleanup;
   }
-  // inja persist ro set mikone
+  // inja persist ro set mikone(age persist 1 bashe baad az khamosh kardane dastgah tun device 
+  // hanoz hast va agar 0 bashe baad az khamosh kardane dastgah hamchenan hastesh)
   if (ioctl(tun_fd, TUNSETPERSIST, persist) < 0)
   {
     perror("failed to set persist of tun device");
     goto tun_cleanup;
   }
   // socket ham built in ast -  inja ye socket ipv4 va tcp sakht
+  // inja socket faghat baraye config kardane tun interface ast (set kardane flage , ...)
   if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
     perror("failed to create socket");
     goto tun_cleanup;
   }
   // inja flag haye interface(tun) ra migirad vali dar if badi set mikonad
+  // SIOCGIFFLAGS == (socket IO get interface flags)
   if (ioctl(sock_fd, SIOCGIFFLAGS, &ifr) < 0)
   {
     perror("failed to read interface flags");
     goto sock_cleanup;
   }
   // inja flag haye interface(tun) ra set mikonim
+  // SIOCSIFFLAGS == (socket IO set interface flags)
+
   ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
   if (ioctl(sock_fd, SIOCSIFFLAGS, &ifr) < 0)
   {
@@ -216,6 +224,7 @@ int tun_alloc(const char *name,
     close(sock_fd);
     return -1;
 }
+// ioctl baraye ertebat gereftan ba drivere (har driver)
 
 
 // in fucntioin baraye socket samt server ast
