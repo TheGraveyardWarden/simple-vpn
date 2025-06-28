@@ -662,6 +662,9 @@ int read_buff(int fd, void *buff, unsigned int size)
 
     if (nread < 0)
     {
+      // errno == in errori hast ke marbot be function read() ast 
+      // EINTR(error interrupt) == vaghti ke az vasate read interrupt khorde bashe
+      // EAGAIN (error again) ==  EWOULDBLOCK == baraye vaghti ke dataei to buffer nist 
       if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
         goto begin_read;
 
@@ -698,7 +701,7 @@ int read_buff2(int fd, void *buff, unsigned int size)
     {
       perror("read()");
       return -1;
-      }
+    }
 
   done:
     return (int)readn;
@@ -769,6 +772,7 @@ int write_u32(int fd, uint32_t x)
 
 int encrypt(const char *plaintext, char *ciphertext, size_t size, const char *key)
 {
+  // agar har kodom null bashand error midahad
   if (!ciphertext || !plaintext)
   {
     errno = EINVAL;
