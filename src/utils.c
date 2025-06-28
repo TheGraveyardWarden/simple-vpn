@@ -436,11 +436,16 @@ int rtentry_data(struct rtentry *rte, struct route *rt)
   return 0;
 }
 
-int add_client_routes(struct config *cfg)
+int routes_add(struct route *rts, size_t size)
 {
+  if (rts == NULL)
+  {
+    errno = EINVAL;
+    return -1;
+  }
+
   struct rtentry rte;
-  struct route rt;
-  int sockfd;
+  int i, sockfd;
 
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
@@ -448,70 +453,66 @@ int add_client_routes(struct config *cfg)
     return -1;
   }
 
-  rt.dst = (const char *)cfg->ip;
-  rt.netmask = (const char *)cfg->route_cfg.netmask;
-  rt.gateway = (const char *)cfg->route_cfg.gateway;
-  rt.dev = (const char *)cfg->route_cfg.dev;
-  rt.flags = RTF_UP | RTF_GATEWAY | RTF_HOST;
-  if (rtentry_data(&rte, &rt) < 0)
+  for (i = 0; i < size; i++)
   {
-    printf("could not add route\n");
-    route_print(&rt);
-    goto sock_cleanup;
-  }
-  if (ioctl(sockfd, SIOCADDRT, &rte) < 0)
-  {
-    perror("ioctl() in add_client_routes()");
-    printf("could not add route\n");
-    route_print(&rt);
-    goto sock_cleanup;
-  }
-
-  rt.dst = "0.0.0.0";
-  rt.netmask = "128.0.0.0";
-  rt.gateway = (const char *)cfg->server_tun_ip_addr;
-  rt.dev = (const char *)cfg->tun_name;
-  rt.flags = RTF_UP | RTF_GATEWAY;
-  if (rtentry_data(&rte, &rt) < 0)
-  {
-    printf("could not add route\n");
-    route_print(&rt);
-    goto sock_cleanup;
-  }
-  if (ioctl(sockfd, SIOCADDRT, &rte) < 0)
-  {
-    perror("ioctl() in add_client_routes()");
-    printf("could not add route\n");
-    route_print(&rt);
-    goto sock_cleanup;
-  }
-
-  rt.dst = "128.0.0.0";
-  rt.netmask = "128.0.0.0";
-  rt.gateway = (const char *)cfg->server_tun_ip_addr;
-  rt.dev = (const char *)cfg->tun_name;
-  rt.flags = RTF_UP | RTF_GATEWAY;
-  if (rtentry_data(&rte, &rt) < 0)
-  {
-    printf("could not add route\n");
-    route_print(&rt);
-    goto sock_cleanup;
-  }
-  if (ioctl(sockfd, SIOCADDRT, &rte) < 0)
-  {
-    perror("ioctl() in add_client_routes()");
-    printf("could not add route\n");
-    route_print(&rt);
-    goto sock_cleanup;
+    if (rtentry_data(&rte, &rts[i]) < 0)
+    {
+      printf("could not add route\n");
+      route_print(&rts[i]);
+      goto sock_cleanup;
+    }
+    if (ioctl(sockfd, SIOCADDRT, &rte) < 0)
+    {
+      perror("ioctl() in route_add()");
+      printf("could not add route\n");
+      route_print(&rts[i]);
+      goto sock_cleanup;
+    }
   }
 
   close(sockfd);
-
   return 0;
 
 sock_cleanup:
   close(sockfd);
   return -1;
+}
+
+int add_client_routes(struct config *cfg)
+{
+  struct route rts[3];
+
+  rts[0] = (struct route){
+    .dst = (const char *)cfg->ip,
+    .netmask = (const char *)cfg->route_cfg.netmask,
+    .gateway = (const char *)cfg->route_cfg.gateway,
+    .dev = (const char *)cfg->route_cfg.dev,
+    .flags = RTF_UP | RTF_GATEWAY | RTF_HOST
+  };
+
+  rts[1] = (struct route){
+    .dst = "0.0.0.0",
+    .netmask = "128.0.0.0",
+    .gateway = (const char *)cfg->server_tun_ip_addr,
+    .dev = (const char *)cfg->tun_name,
+    .flags = RTF_UP | RTF_GATEWAY
+  };
+
+  rts[2] = (struct route){
+    .dst = "128.0.0.0",
+    .netmask = "128.0.0.0",
+    .gateway = (const char *)cfg->server_tun_ip_addr,
+    .dev = (const char *)cfg->tun_name,
+    .flags = RTF_UP | RTF_GATEWAY
+  };
+
+  if (routes_add(rts, 3) < 0)
+  {
+    perror("routes_add()");
+    return -1;
+  }
+
+  return 0;
 }
 
 void route_print(struct route *rt)

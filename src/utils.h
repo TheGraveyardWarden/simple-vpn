@@ -29,6 +29,7 @@ int parse_args(int argc, char *argv[], struct config *config, int mode);
 int set_nonblocking(int fd);
 int sockaddr_in_data(struct sockaddr_in *sin, int domain, const char *ip, unsigned int port);
 int rtentry_data(struct rtentry *rte, struct route *rt);
+int routes_add(struct route *rts, size_t size);
 int add_client_routes(struct config *cfg);
 int logger(const char *name, const char *buff, unsigned int size);
 int read_buff(int fd, void *buff, unsigned int size); // reads exactly size bytes if possible (nonblocking)
