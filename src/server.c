@@ -240,6 +240,7 @@ begin_read_buff:
         }
 
         *tun_buff_len = htonl((uint32_t)nread);
+        debug("[W] %ld: issue write %u bytes\n", tun_id, *tun_buff_len);
         nwrite = write_buff(client_fd, tun_buff, *tun_buff_len);
         if (nwrite < 0)
         {
@@ -266,10 +267,10 @@ begin_read_buff:
         */
 #ifdef PACKET_PROCESS_TIME
         tun_finish = clock();
-        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes, took %f ms\n", tun_id, nwrite, tun_len,
+        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes, took %f ms\n", tun_id, nwrite, *tun_buff_len,
             ((double)(tun_finish - tun_start) / CLOCKS_PER_SEC) * 1000);
 #else
-        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, tun_len);
+        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, *tun_buff_len);
 #endif
       }
     }
