@@ -26,6 +26,12 @@ struct config {
 		char gateway[IPV4SIZ];
 		char dev[IFNAMSIZ];
   } route_cfg;
+
+  struct
+  {
+    char ip[IPV4SIZ];
+    char netmask[IPV4SIZ];
+  } tunnel_range;
 };
 
 #ifdef DEBUG

@@ -29,6 +29,7 @@ static struct option options[] = {
   { "port",           required_argument, 0, 'p' },
   { "ip",             required_argument, 0, 'l' },
   { "server-tun-ip",  required_argument, 0, 's' },
+  { "tunnel-range",   required_argument, 0, 't' },
   { "help",           no_argument,       0, 'h' },
   {  0,               0                , 0,  0  }
 };
@@ -52,7 +53,11 @@ static struct config client_config = {
 		.netmask = "255.255.255.255",
 		.gateway = "192.168.1.1",
 		.dev = "wlan0"
-	}
+	},
+  .tunnel_range = {
+    .ip = "\0",
+    .netmask = "\0"
+  }
 };
 
 void exit_usage(char *bin, int mode)
@@ -69,7 +74,10 @@ void exit_usage(char *bin, int mode)
   printf("\t-p, --port:\t\tserver socket port (default: %u)\n", defaults->port);
   printf("\t-l, --ip:\t\tserver socket ip (default: %s)\n", defaults->ip);
   if (mode == CLIENT)
+  {
     printf("\t-s, --server-tun-ip:\tserver tun ip address (default: %s)\n", defaults->server_tun_ip_addr);
+    printf("\t-t, --tunnel-range:\tonly tunnel a specific range. should be a valid cidr (e.g 192.168.1.0/24). disabled by default\n");
+  }
   printf("\t-h, --help:\t\tshows this help message\n");
 
 	if (mode == CLIENT) {	
@@ -291,7 +299,7 @@ int parse_args(int argc, char *argv[], struct config *config, int mode)
 
   mode2defaults(mode, defaults);
 
-  while ((opt = getopt_long(argc, argv, "i:a:n:p:l:s:h", options, &optind)) != -1)
+  while ((opt = getopt_long(argc, argv, "i:a:n:p:l:s:t:h", options, &optind)) != -1)
   {
     switch(opt)
     {
@@ -328,6 +336,49 @@ int parse_args(int argc, char *argv[], struct config *config, int mode)
 
         VALIDATE_IPV4(optarg);
         strncpy(config->server_tun_ip_addr, optarg, IPV4SIZ);
+        break;
+      case 't':
+        if (mode == SERVER)
+        {
+          printf("[!] Warning: -t, --tunnel-range will be ignored!\n");
+          break;
+        }
+
+        char *cidr = NULL;
+        int i, netmask_shift;
+        uint32_t netmask = 0;
+
+        cidr = strchr(optarg, '/');
+        if (cidr == NULL)
+        {
+          printf("wrong cidr: %s\n", optarg);
+          return -1;
+        }
+
+        *cidr++ = 0;
+
+        VALIDATE_IPV4(optarg);
+        strncpy(config->tunnel_range.ip, optarg, IPV4SIZ);
+
+        netmask_shift = atoi(cidr);
+        if (netmask_shift <= 0 || netmask_shift > 32)
+        {
+          printf("wrong netmask: %d\n", netmask_shift);
+          return -1;
+        }
+
+        for (i = 0; i < netmask_shift; i++)
+        {
+          netmask |= 1 << (31-i);
+        }
+
+        netmask = htonl(netmask);
+
+        if (inet_ntop(AF_INET, (const void *)&netmask, config->tunnel_range.netmask, IPV4SIZ) == NULL)
+        {
+          perror("inet_ntop()");
+          return -1;
+        }
         break;
       case 'h':
       default:
@@ -493,6 +544,7 @@ sock_cleanup:
 int add_client_routes(struct config *cfg)
 {
   struct route rts[3];
+  size_t size = 3;
 
   rts[0] = (struct route){
     .dst = (const char *)cfg->ip,
@@ -502,23 +554,38 @@ int add_client_routes(struct config *cfg)
     .flags = RTF_UP | RTF_GATEWAY | RTF_HOST
   };
 
-  rts[1] = (struct route){
-    .dst = "0.0.0.0",
-    .netmask = "128.0.0.0",
-    .gateway = (const char *)cfg->server_tun_ip_addr,
-    .dev = (const char *)cfg->tun_name,
-    .flags = RTF_UP | RTF_GATEWAY
-  };
+  if (cfg->tunnel_range.ip[0])
+  {
+    size = 2;
 
-  rts[2] = (struct route){
-    .dst = "128.0.0.0",
-    .netmask = "128.0.0.0",
-    .gateway = (const char *)cfg->server_tun_ip_addr,
-    .dev = (const char *)cfg->tun_name,
-    .flags = RTF_UP | RTF_GATEWAY
-  };
+    rts[1] = (struct route){
+      .dst = cfg->tunnel_range.ip,
+      .netmask = cfg->tunnel_range.netmask,
+      .gateway = (const char *)cfg->server_tun_ip_addr,
+      .dev = (const char *)cfg->tun_name,
+      .flags = RTF_UP | RTF_GATEWAY
+    };
+  }
+  else
+  {
+    rts[1] = (struct route){
+      .dst = "0.0.0.0",
+      .netmask = "128.0.0.0",
+      .gateway = (const char *)cfg->server_tun_ip_addr,
+      .dev = (const char *)cfg->tun_name,
+      .flags = RTF_UP | RTF_GATEWAY
+    };
+  
+    rts[2] = (struct route){
+      .dst = "128.0.0.0",
+      .netmask = "128.0.0.0",
+      .gateway = (const char *)cfg->server_tun_ip_addr,
+      .dev = (const char *)cfg->tun_name,
+      .flags = RTF_UP | RTF_GATEWAY
+    };
+  }
 
-  if (routes_add(rts, 3) < 0)
+  if (routes_add(rts, size) < 0)
   {
     perror("routes_add()");
     return -1;
