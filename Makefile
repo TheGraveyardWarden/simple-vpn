@@ -11,7 +11,7 @@ ifdef PPT
 endif
 endif
 
-ifdef TROS
+ifndef NO_TROS
 	DEFINES+=-DTUN_READ_PREFERRED_OVER_SOCK
 endif
 
