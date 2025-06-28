@@ -6,10 +6,9 @@ ifndef DEBUG
 	CFLAGS+=-Ofast
 else
 	DEFINES+=-DDEBUG
-endif
-
 ifdef PPT
 	DEFINES+=-DPACKET_PROCESS_TIME
+endif
 endif
 
 ifdef TROS
