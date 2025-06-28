@@ -356,12 +356,24 @@ int parse_args(int argc, char *argv[], struct config *config, int mode)
 
 		if ((env = getenv(ROUTE_NETMASK_ENV)) == NULL)
 			strncpy(config->route_cfg.netmask, defaults->route_cfg.netmask, IPV4SIZ);
+    else
+    {
+      VALIDATE_IPV4(env);
+			strncpy(config->route_cfg.netmask, env, IPV4SIZ);
+    }
 
 		if ((env = getenv(ROUTE_GATEWAY_ENV)) == NULL)
 			strncpy(config->route_cfg.gateway, defaults->route_cfg.gateway, IPV4SIZ);
+    else
+    {
+      VALIDATE_IPV4(env);
+			strncpy(config->route_cfg.gateway, env, IPV4SIZ);
+    }
 
 		if ((env = getenv(ROUTE_DEV_ENV)) == NULL)
 			strncpy(config->route_cfg.dev, defaults->route_cfg.dev, IFNAMSIZ);
+    else
+			strncpy(config->route_cfg.dev, env, IFNAMSIZ);
 	}
 
   return 0;
