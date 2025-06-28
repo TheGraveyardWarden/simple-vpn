@@ -223,7 +223,7 @@ begin_read_buff:
           return -1;
         }
 
-        *tun_buff_len = (uint32_t)nread;
+        *tun_buff_len = htonl((uint32_t)nread);
         nwrite = write_buff(sock_fd, tun_buff, *tun_buff_len);
         if (nwrite < 0)
         {
