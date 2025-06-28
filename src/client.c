@@ -225,7 +225,7 @@ begin_read_buff:
           return -1;
         }
 
-        tun_buff_len = *tun_buff_len_net;
+        tun_buff_len = (uint32_t)nread;
         *tun_buff_len_net = htonl((uint32_t)nread);
         debug("[W] %ld: issue write %u bytes\n", tun_id, tun_buff_len);
         nwrite = write_buff(sock_fd, tun_buff, tun_buff_len+sizeof(*tun_buff_len_net));
