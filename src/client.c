@@ -215,20 +215,23 @@ begin_read_buff:
         tun_id++;
 #endif
 
-        uint32_t *tun_buff_len = (uint32_t *)&tun_buff[0];
-        nread = read_buff2(tun_fd, tun_buff+sizeof(*tun_buff_len), BUFFSZ);
+        uint32_t *tun_buff_len_net = (uint32_t *)&tun_buff[0];
+        uint32_t tun_buff_len;
+
+        nread = read_buff2(tun_fd, tun_buff+sizeof(*tun_buff_len_net), BUFFSZ);
         if (nread < 0)
         {
           printf("read_buff(tun_fd, buff, BUFFSZ)\n");
           return -1;
         }
 
-        *tun_buff_len = htonl((uint32_t)nread);
-        debug("[W] %ld: issue write %u bytes\n", tun_id, ntohl(*tun_buff_len));
-        nwrite = write_buff(sock_fd, tun_buff, ntohl(*tun_buff_len)+sizeof(*tun_buff_len));
+        tun_buff_len = *tun_buff_len_net;
+        *tun_buff_len_net = htonl((uint32_t)nread);
+        debug("[W] %ld: issue write %u bytes\n", tun_id, tun_buff_len);
+        nwrite = write_buff(sock_fd, tun_buff, tun_buff_len+sizeof(*tun_buff_len_net));
         if (nwrite < 0)
         {
-          perror("write_buff(sock_fd, buff, *tun_buff_len)");
+          perror("write_buff(sock_fd, buff, tun_buff_len)");
           return -1;
         }
 
@@ -251,10 +254,10 @@ begin_read_buff:
         */
 #ifdef PACKET_PROCESS_TIME
         tun_finish = clock();
-        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes, took %f ms\n", tun_id, nwrite, ntohl(*tun_buff_len),
+        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes, took %f ms\n", tun_id, nwrite, tun_buff_len,
             ((double)(tun_finish - tun_start) / CLOCKS_PER_SEC) * 1000);
 #else
-        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, ntohl(*tun_buff_len));
+        debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes\n", tun_id, nwrite, tun_buff_len);
 #endif
       }
     }
