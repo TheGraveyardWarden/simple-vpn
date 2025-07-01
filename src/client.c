@@ -235,23 +235,6 @@ begin_read_buff:
           return -1;
         }
 
-        /*
-        tun_len = (uint32_t)nread;
-        debug("[W] %ld: issue write to peer: len: %u\n", tun_id, tun_len);
-        nwrite = write_u32(sock_fd, tun_len);
-        if (nwrite < 0)
-        {
-          perror("write_u32(client_fd, len)");
-          return -1;
-        }
-
-        nwrite = write_buff(sock_fd, tun_buff, tun_len);
-        if (nwrite < 0)
-        {
-          perror("write_buff(client_fd, buff, len)");
-          return -1;
-        }
-        */
 #ifdef PACKET_PROCESS_TIME
         tun_finish = clock();
         debug("[W] %ld: finished write operation: wrote: %d bytes, expected to write %u bytes, took %f ms\n", tun_id, nwrite, tun_buff_len,
