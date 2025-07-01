@@ -755,7 +755,10 @@ _write:
 
 	if (nwrite < 0) {
 		if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+    {
+      printf("WRITE IS BLOCKING\n");
 			goto _write;
+    }
 
 		return (int)nwrite;
 	}
