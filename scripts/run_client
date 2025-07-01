@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+if [ $(/usr/bin/whoami) != "root" ]
+then
+  echo "Must be root!"
+  exit 1
+fi
+
+if [[ -z $VPN_BIN_DIR ]]; then
+  VPN_BIN_DIR=bin
+fi
+
+if [ $# -lt 1 ]
+then
+  echo "Usage: $0 <dest> <gateway>"
+  exit 2
+fi
+
+DEST=$1
+export RT_GATEWAY=$2
+NETMASK=255.255.255.255
+
+route del -net $DEST netmask $NETMASK 2>/dev/null
+
+$VPN_BIN_DIR/client -l $1
+
+
