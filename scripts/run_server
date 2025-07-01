@@ -1,14 +1,24 @@
 #!/bin/bash
 
-CLEAR_NFT=/home/ali/Documents/simple-vpn/scripts/clear_nft
+if [[ -z $VPN_BIN_DIR ]]
+then
+	export VPN_BIN_DIR=bin
+fi
 
-APPLY_NFT=/home/ali/Documents/simple-vpn/scripts/apply_nft
+if [[ -z $VPN_SCRIPTS_DIR ]]
+then
+	export VPN_SCRIPTS_DIR=scripts
+fi
+
+CLEAR_NFT=$VPN_SCRIPTS_DIR/clear_nft
+
+APPLY_NFT=$VPN_SCRIPTS_DIR/apply_nft
 TUN=tun0
 DEV=wlp4s0
 CIDR=10.0.0.0/24
 PORT=1337
 
-RUN_SERVER=/home/ali/Documents/simple-vpn/bin/server || echo "whaaat??"
+RUN_SERVER=$VPN_BIN_DIR/server || echo "whaaat??"
 
 sudo $CLEAR_NFT 2> /dev/null
 sudo $APPLY_NFT $TUN $DEV $CIDR $PORT
