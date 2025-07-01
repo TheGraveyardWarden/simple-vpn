@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  while(1);
-
   if ((sock_fd = sock_connect(AF_INET, SOCK_STREAM, 0, config.ip, config.port)) < 0)
   {
     perror("sock_connect()");
