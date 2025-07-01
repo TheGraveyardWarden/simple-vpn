@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CLEAR_NFT=/home/ali/Documents/simple-vpn/scripts/clear_nft
+
+APPLY_NFT=/home/ali/Documents/simple-vpn/scripts/apply_nft
+TUN=tun0
+DEV=wlp4s0
+CIDR=10.0.0.0/24
+PORT=1337
+
+RUN_SERVER=/home/ali/Documents/simple-vpn/bin/server || echo "whaaat??"
+
+sudo $CLEAR_NFT 2> /dev/null
+sudo $APPLY_NFT $TUN $DEV $CIDR $PORT
+sudo $RUN_SERVER
