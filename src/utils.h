@@ -38,6 +38,7 @@ int read_blocking(int fd, void *buff, unsigned int size); // reads exactly size 
 int read_u32(int fd, uint32_t *u32);
 int write_u32(int fd, uint32_t x);
 int write_buff(int fd, const void *buff, size_t size);
+void packet_print(char *buff);
 
 #define VALIDATE_IPV4(ip) \
   if (validate_ipv4((ip)) < 0) { printf("invalid ip address: %s\n", ip); exit(-1); }

@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <linux/route.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
 
 #define mode2defaults(mode, defaults_p)\
 if      (mode == SERVER) (defaults_p) = &server_config;\
@@ -775,5 +778,42 @@ int write_u32(int fd, uint32_t x)
 	uint32_t net_x = htonl(x);
 
 	return write_buff(fd, &net_x, sizeof(uint32_t));
+}
+
+void packet_print(char *buff)
+{
+  struct iphdr *ip = (struct iphdr *)buff;
+
+  char src[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN] = {0};
+  inet_ntop(AF_INET, &ip->saddr, src, sizeof(src));
+  inet_ntop(AF_INET, &ip->daddr, dst, sizeof(dst));
+
+  __u16 source, dest = 0;
+
+  if (ip->protocol == IPPROTO_TCP) {
+    struct tcphdr *tcp = (struct tcphdr *)(buff+(ip->ihl*4));
+    source = tcp->source;
+    dest = tcp->dest;
+
+    printf("%s\tsrc: %s:%d\t\tdst: %s:%d\n",
+            "TCP",
+            src, source,
+            dst, dest);
+  } else if (ip->protocol == IPPROTO_UDP) {
+    struct udphdr *udp = (struct udphdr *)(buff+(ip->ihl*4));
+    source = udp->source;
+    dest = udp->dest;
+
+    printf("%s\tsrc: %s:%d\t\tdst: %s:%d\n",
+            "UDP",
+            src, source,
+            dst, dest);
+  } else if (ip->protocol == IPPROTO_ICMP) {
+    printf("%s\tsrc: %s\t\tdst: %s\n",
+            "ICMP",
+            src, dst);
+  } else {
+    printf("unknown packet\n");
+  }
 }
 

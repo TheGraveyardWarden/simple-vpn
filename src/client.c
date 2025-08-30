@@ -187,6 +187,8 @@ begin_read_buff:
           return -1;
         }
 
+        packet_print(sock_buff);
+
         nwrite = write_buff(tun_fd, sock_buff, sock_len);
         if (nwrite < 0)
         {
@@ -226,6 +228,8 @@ begin_read_buff:
           printf("read_buff(tun_fd, buff, BUFFSZ)\n");
           return -1;
         }
+
+        packet_print(tun_buff+sizeof(*tun_buff_len_net));
 
         tun_buff_len = (uint32_t)nread;
         *tun_buff_len_net = htonl((uint32_t)nread);
